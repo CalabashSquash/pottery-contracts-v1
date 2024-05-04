@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "lib/solmate/src/tokens/ERC721.sol";
+import {LibString} from "lib/solmate/src/utils/LibString.sol";
 
 contract Ticket is ERC721 {
     address minter;
@@ -15,6 +16,10 @@ contract Ticket is ERC721 {
 
     function mint(address to, uint256 tokenId) external onlyMinter {
         _mint(to, tokenId);
+    }
+
+    function tokenURI(uint256 id) public view override returns (string memory) {
+        return LibString.toString(id);
     }
 
     modifier onlyMinter() {

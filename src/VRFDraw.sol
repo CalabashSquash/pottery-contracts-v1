@@ -81,7 +81,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
      * @param requestId - id of the request
      * @param randomWords - array of random results from VRF Coordinator
      */
-    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
         // You can return the value to the requester,
         // but this example simply stores it.
         s_requestIdToRandomWords[requestId] = randomWords;

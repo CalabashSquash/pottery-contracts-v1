@@ -23,6 +23,7 @@ contract CounterTest is Test {
     uint256[] rewards;
 
     error DepositAfterMintWindow();
+    error WinnerAlreadyPaid();
 
     function setUp() public {
         mockRewardTokens.push(address(new MockRewardToken(bal, "1", "1")));
@@ -82,12 +83,11 @@ contract CounterTest is Test {
             // hashes to 2 modulo total supply (secondPlayer owns tokenId 2)
             uint256 number = 126;
             bytes32 winningHash = keccak256(abi.encodePacked(number));
-            kiln.vrfCallback(winningHash);
             uint256 preBal1 = IERC20(mockRewardTokens[0]).balanceOf(secondPlayer);
             uint256 preBal2 = IERC20(mockRewardTokens[1]).balanceOf(secondPlayer);
             uint256 preBal3 = IERC20(mockRewardTokens[2]).balanceOf(secondPlayer);
 
-            kiln.payOutWinner();
+            kiln.vrfCallback(winningHash);
 
             uint256 postBal1 = IERC20(mockRewardTokens[0]).balanceOf(secondPlayer);
             uint256 postBal2 = IERC20(mockRewardTokens[1]).balanceOf(secondPlayer);
@@ -96,6 +96,9 @@ contract CounterTest is Test {
             assertEq(preBal1 + rewardAmount - treasuryReward, postBal1, "1");
             assertEq(preBal2 + rewardAmount - treasuryReward, postBal2, "2");
             assertEq(preBal3 + rewardAmount - treasuryReward, postBal3, "3");
+
+            vm.expectRevert(WinnerAlreadyPaid.selector);
+            kiln.payOutWinner();
         }
 
         uint256 postBal1T = IERC20(mockRewardTokens[0]).balanceOf(treasury);

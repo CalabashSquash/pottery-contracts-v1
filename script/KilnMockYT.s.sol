@@ -10,10 +10,7 @@ contract KilnScript is Script {
     function setUp() public {}
 
     function run() public {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        uint256 roundId = vm.envUint("ROUND_ID");
-
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         address[] memory rewardTokens = new address[](1);
         MockRewardToken rwt = new MockRewardToken(1000 ether, "REWARD TOKEN", "RWT");
@@ -23,18 +20,21 @@ contract KilnScript is Script {
         rewardAmounts[0] = 100 ether;
 
         MockYT mockYT =
-            new MockYT(block.timestamp + (10 * 60), rewardTokens, address(123), 100 ether, "YIELD TOKEN", "YT");
+            new MockYT(block.timestamp + (10 * 60), rewardTokens, address(123), 1000 ether, "YIELD TOKEN", "YT");
         mockYT.setRewards(rewardAmounts);
 
-        uint256 lotteryEnd = block.timestamp + (20);
-        uint256 mintWindowEnd = block.timestamp + (10);
+        uint256 lotteryEnd = block.timestamp + (8 * (60 * 60));
+        uint256 mintWindowEnd = block.timestamp + (7 * (60 * 60));
+        uint256 roundId = 8;
         uint256 treasuryDivisor = 10;
-        uint256 ticketCost = 1 ether;
-        address vrf = 0x6379c0B3eE6BdC336f674e7fa111503180c4Fc01;
+        uint256 ticketCost = 0.5 ether;
+        address vrf = 0xAD11fa4db9A36AD458e05F71056ee6279D56FdB4;
         address treasury = vrf;
 
         Kiln kiln =
             new Kiln(address(mockYT), roundId, vrf, lotteryEnd, mintWindowEnd, treasuryDivisor, treasury, ticketCost);
+
+        mockYT.transfer(0x9332e38f1a9BA964e166DE3eb5c637bc36cD4D27, 5 ether);
 
         console2.log("====Kiln Address====");
         console2.log(address(kiln));

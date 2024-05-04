@@ -3,12 +3,8 @@
 [.readme-notice]
 NOTE: This document is better viewed at https://docs.openzeppelin.com/contracts/api/finance
 
-This directory includes primitives for financial systems:
+This directory includes primitives for financial systems. We currently only offer the {PaymentSplitter} contract, but we want to grow this directory so we welcome ideas.
 
-- {VestingWallet} handles the vesting of Ether and ERC20 tokens for a given beneficiary. Custody of multiple tokens can
-  be given to this contract, which will release the token to the beneficiary following a given, customizable, vesting
-  schedule.
+== PaymentSplitter
 
-== Contracts
-
-{{VestingWallet}}
+{{PaymentSplitter}}

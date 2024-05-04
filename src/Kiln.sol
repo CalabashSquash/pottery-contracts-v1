@@ -4,8 +4,8 @@ pragma solidity ^0.8.13;
 // import "openzeppelin/contracts/"
 import {IPYieldTokenV2} from "pendle-v2/contracts/interfaces/IPYieldTokenV2.sol";
 import {MiniHelpers} from "pendle-v2/contracts/core/libraries/MiniHelpers.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "lib/solmate/src/tokens/ERC721.sol";
+import {LibString} from "lib/solmate/src/utils/LibString.sol";
 
 import {console2} from "forge-std/console2.sol";
 
@@ -27,12 +27,17 @@ contract Kiln is ERC721 {
     address public treasury;
     uint256 public ID;
 
+    bool public winnerPaidOut = false;
+
     error NotVRF(address caller);
     error WinningNumberNotSet();
     error LotteryNotOver();
     error LotteryEndsAfterYtExpiration();
     error MintWindowEndsAfterYtExpiration();
     error DepositAfterMintWindow();
+    error WithdrawTooEarly();
+    error BalanceTooLow();
+    error WinnerAlreadyPaid();
 
     /**
      * @dev Because we mint one NFT per ticket, we can configure the ticket cost based off both the gas price of the
@@ -67,19 +72,19 @@ contract Kiln is ERC721 {
         treasury = _treasury;
         ticketCost = _ticketCost;
         ID = _roundId;
+    }
 
-        // expiry timing logic
-        // DRand, ranDAO
-        // NTH: tiers
+    function tokenURI(uint256 id) public pure override returns (string memory) {
+        return LibString.toString(id);
     }
 
     function genName(uint256 _roundId) internal pure returns (string memory) {
-        string memory roundId = Strings.toString(_roundId);
+        string memory roundId = LibString.toString(_roundId);
         return string.concat("Pottery Round ", roundId);
     }
 
     function genSymbol(uint256 _roundId) internal pure returns (string memory) {
-        string memory roundId = Strings.toString(_roundId);
+        string memory roundId = LibString.toString(_roundId);
         return string.concat("PR", roundId);
     }
 
@@ -98,17 +103,35 @@ contract Kiln is ERC721 {
         yt.transferFrom(msg.sender, address(this), buyAmount * ticketCost);
     }
 
+    function withdrawYT(uint256 ticketAmount) external {
+        if (block.timestamp < lotteryEnd) {
+            revert WithdrawTooEarly();
+        }
+
+        if (balanceOf(msg.sender) < ticketAmount) {
+            revert BalanceTooLow();
+        }
+
+        // YT = ticket * ticketCost
+        uint256 ytAmount = ticketCost * ticketAmount;
+        yt.transfer(msg.sender, ytAmount);
+    }
+
     function vrfCallback(bytes32 randomNumber) public onlyVrf {
         if (!MiniHelpers.isCurrentlyExpired(lotteryEnd)) {
             revert LotteryNotOver();
         }
 
         winningNumber = randomNumber;
-        // TODO payout winner here
+        payOutWinner();
     }
 
     function payOutWinner() public {
+        if (winnerPaidOut) {
+            revert WinnerAlreadyPaid();
+        }
         address winner = calculateWinner();
+        winnerPaidOut = true;
         // get reward token first
         address[] memory rewardTokens = yt.getRewardTokens();
         yt.redeemDueInterestAndRewards(address(this), true, true);
@@ -119,8 +142,6 @@ contract Kiln is ERC721 {
             IERC20(rewardTokens[i]).transfer(treasury, treasuryReward);
             IERC20(rewardTokens[i]).transfer(winner, winnerReward);
         }
-
-        // TODO also transfer out the SY interest
     }
 
     function calculateWinner() public view returns (address) {
