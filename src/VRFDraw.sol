@@ -1,58 +1,163 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
-import "@chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import {LinkTokenInterface} from "@chainlink/contracts/src/v0.8/shared/interfaces/LinkTokenInterface.sol";
+import {IVRFCoordinatorV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/interfaces/IVRFCoordinatorV2Plus.sol";
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
-contract VRFDraw is VRFConsumerBaseV2 {
-    VRFCoordinatorV2Interface COORDINATOR;
+/**
+ * @title The VRFConsumerV2 contract
+ * @notice A contract that gets random values from Chainlink VRF V2
+ */
+contract VRFDraw is VRFConsumerBaseV2Plus {
+    IVRFCoordinatorV2Plus immutable COORDINATOR;
+    LinkTokenInterface immutable LINKTOKEN;
+
     // Your subscription ID.
-    //hardcoded into the constructor
-    uint64 s_subscriptionId;
-    // Goerli VRF v2 coordinator address
-    //address vrfCoordinator = 0x2Ca8E0C643bDe4C2E08ab1fA0da3401AdAD7734D;
+    uint64 immutable s_subscriptionId;
+
     // The gas lane to use, which specifies the maximum gas price to bump to.
-    // Higher gas lane means higher price and lower confirmation times,
-    // mainnets on chainlink VRF typically have multiple gas lanes,
-    // but Goerli only has one gas lane. For more details,
+    // For a list of available gas lanes on each network,
     // see https://docs.chain.link/docs/vrf-contracts/#configurations
-    bytes32 keyHash = 0x79d3d8832d904592c0bf9818b621522c988bb8b0c05cdc3b15aea1b6e8db0c15;
-    //Goerli has a max gas limit of 2.5 million,
-    //we'll cap out at 200000, enough for about 10 words
-    uint32 callbackGasLimit = 200000;
+    bytes32 immutable s_keyHash;
+
+    // Depends on the number of requested values that you want sent to the
+    // fulfillRandomWords() function. Storing each word costs about 20,000 gas,
+    // so 100,000 is a safe default for this example contract. Test and adjust
+    // this limit based on the network that you select, the size of the request,
+    // and the processing of the callback request in the fulfillRandomWords()
+    // function.
+    uint32 s_callbackGasLimit;
+
     // The default is 3, but you can set this higher.
-    uint16 requestConfirmations = 5;
+    uint16 immutable s_requestConfirmations = 1;
+
+    // For this example, retrieve 2 random values in one request.
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
-    //maximum number of random values is 500 for Goerli Testnet
-    uint32 public numWords = 3;
+    uint32 public immutable s_numWords = 9;
+
     uint256[] public s_randomWords;
-    uint256 public s_requestId;
     address s_owner;
 
-    constructor(uint64 subscriptionId, address vrfCoordinator) VRFConsumerBaseV2(vrfCoordinator) {
-        COORDINATOR = VRFCoordinatorV2Interface(vrfCoordinator);
+    mapping(uint256 => uint256[]) public s_requestIdToRandomWords;
+    mapping(uint256 => address) public s_requestIdToKiln;
+    uint256 public s_requestId;
+
+    address public s_keeper;
+
+    event ReturnedRandomness(uint256[] randomWords);
+
+    /**
+     * @notice Constructor inherits VRFConsumerBaseV2
+     *
+     * @param subscriptionId - the subscription ID that this contract uses for funding requests
+     * @param vrfCoordinator - coordinator, check https://docs.chain.link/docs/vrf-contracts/#configurations
+     * @param keyHash - the gas lane to use, which specifies the maximum gas price to bump to
+     */
+    constructor(uint64 subscriptionId, address vrfCoordinator, address link, bytes32 keyHash, uint32 callbackGasLimit)
+        VRFConsumerBaseV2Plus(vrfCoordinator)
+    {
+        COORDINATOR = IVRFCoordinatorV2Plus(vrfCoordinator);
+        LINKTOKEN = LinkTokenInterface(link);
+        s_keyHash = keyHash;
         s_owner = msg.sender;
+        s_callbackGasLimit = callbackGasLimit;
         s_subscriptionId = subscriptionId;
     }
-    // Assumes the subscription is funded sufficiently.
 
-    function requestRandomWords() external onlyOwner {
-        // Will revert if subscription is not set and funded.
-        s_requestId =
-            COORDINATOR.requestRandomWords(keyHash, s_subscriptionId, requestConfirmations, callbackGasLimit, numWords);
+    function requestRandomWords() external onlyOwner returns (uint256) {
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: s_keyHash,
+                subId: s_subscriptionId,
+                requestConfirmations: s_requestConfirmations,
+                s_callbackGasLimit: s_callbackGasLimit,
+                numWords: s_numWords,
+                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
+            })
+        );
+
+        // Store the latest requestId for this example.
+        s_requestId = requestId;
+
+        // Return the requestId to the requester.
+        return requestId;
     }
 
-    function fulfillRandomWords(uint256, /* requestId */ uint256[] memory randomWords) internal override {
-        s_randomWords = randomWords;
+    /**
+     * @notice Callback function used by VRF Coordinator
+     *
+     * @param requestId - id of the request
+     * @param randomWords - array of random results from VRF Coordinator
+     */
+    function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal override {
+        // You can return the value to the requester,
+        // but this example simply stores it.
+        s_requestIdToRandomWords[requestId] = randomWords;
+        kiln = s_requestIdToKiln[requestId];
+         
     }
 
-    //function to change the number of requested words per VRF request.
-    function changeNumOfWords(uint32 _numWords) public onlyOwner {
-        numWords = _numWords;
+    function setKeeper(address _keeper) external onlyOwner {
+        s_keeper = _keeper;
+    }
+
+    /**
+     * @notice upKeep function to send VRF number to a kiln, only one number
+     *
+     * @param address kiln - the kiln to send the number to
+     */
+    function upKeep(address kiln) external onlyKeeper {
+        // TODO: check market is type of kiln
+        uint256 requestId = _requestRandomWords();
+
+        s_requestIdToKiln[requestId] = kiln;
+    }
+
+    /**
+     * @notice upKeep function to send VRF number to a kiln, multiple numbers
+     *
+     * @param address kiln - the kiln to send the numbers to
+     */
+    function upKeepMany(address kiln) external onlyKeeper {
+        // TODO: check market is type of kiln
+
+        uint256 requestId = _requestRandomWords();
+
+        s_requestIdToKiln[requestId] = kiln;
+
+
+
+
+    }
+
+    function _requestRandomWords() internal {
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: s_keyHash,
+                subId: s_subscriptionId,
+                requestConfirmations: s_requestConfirmations,
+                s_callbackGasLimit: s_callbackGasLimit,
+                numWords: s_numWords,
+                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
+            })
+        );
+
+        // Store the latest requestId for this example.
+        s_requestId = requestId;
+
+        // Return the requestId to the requester.
+        return requestId;
     }
 
     modifier onlyOwner() {
         require(msg.sender == s_owner);
+        _;
+    }
+
+    modifier onlyKeeper() {
+        require(msg.sender == s_keeper);
         _;
     }
 }
