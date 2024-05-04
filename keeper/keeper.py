@@ -75,10 +75,8 @@ class Keeper:
     def execute(self):
         if self.config["vrf"]:
             self._execute_vrf()
-        elif self.config["blockhash_random"]:
-            self._execute_blockhash_random()
         else:
-            self._execute()
+            self._execute_blockhash_random()
 
     def _execute_vrf(self):
         # get address type to send to contract from string address
