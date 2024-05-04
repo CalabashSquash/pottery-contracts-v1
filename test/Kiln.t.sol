@@ -6,12 +6,23 @@ import {Kiln} from "../src/Kiln.sol";
 import {MockYT} from "../src/MockYT.sol";
 import {MockRewardToken} from "../src/MockRewardToken.sol";
 
+interface IERC20 {
+    function balanceOf(address user) external view returns (uint256);
+    function transfer(address to, uint256 amount) external;
+}
+
 contract CounterTest is Test {
     Kiln public kiln;
     MockYT public mockYT;
     address[] public mockRewardTokens;
     MockRewardToken public mockSY;
     uint256 constant bal = 100e18;
+
+    uint256 constant rewardAmount = 5e18; // 5
+    uint256 constant treasuryReward = 5e17; // 0.5
+    uint256[] rewards;
+
+    error DepositAfterMintWindow();
 
     function setUp() public {
         mockRewardTokens.push(address(new MockRewardToken(bal, "1", "1")));
@@ -20,6 +31,14 @@ contract CounterTest is Test {
         mockSY = new MockRewardToken(bal, "SY", "SY");
 
         mockYT = new MockYT(block.timestamp + 100, mockRewardTokens, address(mockSY), bal, "YT", "YT");
+        rewards.push(rewardAmount);
+        rewards.push(rewardAmount);
+        rewards.push(rewardAmount);
+        mockYT.setRewards(rewards);
+
+        IERC20(mockRewardTokens[0]).transfer(address(mockYT), rewardAmount);
+        IERC20(mockRewardTokens[1]).transfer(address(mockYT), rewardAmount);
+        IERC20(mockRewardTokens[2]).transfer(address(mockYT), rewardAmount);
     }
 
     function test_KilnHappyPath() public {
@@ -31,12 +50,12 @@ contract CounterTest is Test {
         uint256 ticketCost = 1e18;
         kiln = new Kiln(address(mockYT), 0, vrf, lottoEnd, mintWindowEnd, divisor, treasury, ticketCost);
 
-        address degen = address(123123);
+        address degen = address(0x123123);
         mockYT.transfer(degen, 10e18);
 
         vm.startPrank(degen);
         mockYT.approve(address(kiln), type(uint256).max);
-        kiln.depositYT(5); // Buy 5, for 1 SY each (10SY)
+        kiln.depositYT(5); // Buy 5, for 1 YT each (5YT)
 
         console2.log(kiln.balanceOf(degen));
 
@@ -47,11 +66,45 @@ contract CounterTest is Test {
         // assertEq(10, 10, "Ticket balance not equal");
         assertEq(balance, expectedBalance);
 
-        vm.warp(lottoEnd + 1);
-        vm.expectRevert();
+        vm.warp(mintWindowEnd + 1);
+
+        vm.expectRevert(DepositAfterMintWindow.selector);
         kiln.depositYT(1);
 
-        kiln.transfer()
+        address secondPlayer = address(0x9999);
+
+        kiln.transferFrom(degen, secondPlayer, 2);
+
+        vm.stopPrank();
+
+        {
+            // hashes to 2 modulo total supply (secondPlayer owns tokenId 2)
+            uint256 number = 126;
+            bytes32 winningHash = keccak256(abi.encodePacked(number));
+            uint256 winningId = uint256(winningHash) % 5;
+            kiln.vrfCallback(winningHash);
+            uint256 preBal1 = IERC20(mockRewardTokens[0]).balanceOf(secondPlayer);
+            uint256 preBal2 = IERC20(mockRewardTokens[1]).balanceOf(secondPlayer);
+            uint256 preBal3 = IERC20(mockRewardTokens[2]).balanceOf(secondPlayer);
+
+            kiln.payOutWinner();
+
+            uint256 postBal1 = IERC20(mockRewardTokens[0]).balanceOf(secondPlayer);
+            uint256 postBal2 = IERC20(mockRewardTokens[1]).balanceOf(secondPlayer);
+            uint256 postBal3 = IERC20(mockRewardTokens[2]).balanceOf(secondPlayer);
+
+            assertEq(preBal1 + rewardAmount - treasuryReward, postBal1, "1");
+            assertEq(preBal2 + rewardAmount - treasuryReward, postBal2, "2");
+            assertEq(preBal3 + rewardAmount - treasuryReward, postBal3, "3");
+        }
+
+        uint256 postBal1 = IERC20(mockRewardTokens[0]).balanceOf(treasury);
+        uint256 postBal2 = IERC20(mockRewardTokens[1]).balanceOf(treasury);
+        uint256 postBal3 = IERC20(mockRewardTokens[2]).balanceOf(treasury);
+
+        assertEq(treasuryReward, postBal1);
+        assertEq(treasuryReward, postBal2);
+        assertEq(treasuryReward, postBal3);
     }
 }
 
