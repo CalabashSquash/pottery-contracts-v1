@@ -58,15 +58,21 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
      * @param vrfCoordinator - coordinator, check https://docs.chain.link/docs/vrf-contracts/#configurations
      * @param keyHash - the gas lane to use, which specifies the maximum gas price to bump to
      */
-    constructor(uint256 subscriptionId, address vrfCoordinator, address link, bytes32 keyHash, uint32 callbackGasLimit)
-        VRFConsumerBaseV2Plus(vrfCoordinator)
-    {
+    constructor(
+        address keeper,
+        uint256 subscriptionId,
+        address vrfCoordinator,
+        address link,
+        bytes32 keyHash,
+        uint32 callbackGasLimit
+    ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         COORDINATOR = IVRFCoordinatorV2Plus(vrfCoordinator);
         LINKTOKEN = LinkTokenInterface(link);
         s_keyHash = keyHash;
         s_owner = msg.sender;
         s_callbackGasLimit = callbackGasLimit;
         s_subscriptionId = subscriptionId;
+        s_keeper = keeper;
     }
 
     function requestRandomWords() external onlyOwner returns (uint256) {
