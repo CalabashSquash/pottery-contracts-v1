@@ -1,9 +1,10 @@
 {
     "chain_name": "arbitrum sepolia",
-    "rpc": "http://localhost:8545",
-    "network_id": 1,
+    "rpc_url": "https://sepolia-rollup.arbitrum.io/rpc",
+    "network_id": 421614,
     "vrf": "true",
-    "random_address": "0x3d2341ADb2D31f1c93C4b0a6cf5bE5f7b8f0b7C1",
-    "deadline_timestamp": 1630000000,
-    "delay": 60
+    "contract_address": "0x89426168c6F56ebaE35653838A1bE98C931bA664",
+    "deadline_timestamp": 1714806061,
+    "delay": 60,
+    "currency": "ETH"
 }
