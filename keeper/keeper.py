@@ -22,11 +22,13 @@ class Keeper:
         self.web3 = Web3(Web3.HTTPProvider(config["rpc_url"]))
         # get enviorment variable PRIVATE_KEY
         self.account = account
-
+        self.currency = config["currency"]
         if config["vrf"]:
-            abi = "vrf_abi.json"
+            abi = "VRFDraw.json"
         else:
-            abi = "abi.json"
+            abi = "BlockHashDraw.json"
+
+        abi = open_json(abi)["abi"]
 
         self.contract = self.web3.eth.contract(
             address=config["contract_address"], abi=abi
@@ -37,7 +39,7 @@ class Keeper:
         print(f"Deadline is {datetime.datetime.fromtimestamp(self.deadline)}")
         print(f"Time now is {datetime.datetime.now()}")
 
-        self.w3 = Web3(Web3.HTTPProvider(config["rpc_url"])
+        self.w3 = Web3(Web3.HTTPProvider(config["rpc_url"]))
         self.w3.middleware_onion.add(
             construct_sign_and_send_raw_middleware(self.account)
         )
@@ -45,9 +47,8 @@ class Keeper:
         print(f"Your hot wallet address is {self.account.address}")
         self.balance = self.w3.eth.get_balance(self.account.address)
         print(
-            f"Your hot wallet balance is {OneInch.parse_float(self.w3.from_wei(self.balance, 'ether'))} {self.currency}"
+            f"Your hot wallet balance is {self.w3.from_wei(self.balance, 'ether')} {self.currency}"
         )
-
     def spin(self):
         while True:
             self.check()
@@ -67,6 +68,7 @@ class Keeper:
             self._execute()
 
     def _execute_vrf(self):
+         
         pass
 
     def _execute_blockhash_random(self):
