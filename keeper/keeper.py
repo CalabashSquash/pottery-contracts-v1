@@ -23,6 +23,7 @@ class Keeper:
         # get enviorment variable PRIVATE_KEY
         self.config = config
         self.account = account
+        self.w3 = Web3(Web3.HTTPProvider(config["rpc_url"]))
         self.currency = config["currency"]
         if config["vrf"]:
             abi = "VRFDraw.json"
@@ -34,13 +35,18 @@ class Keeper:
         self.contract = self.web3.eth.contract(
             address=config["contract_address"], abi=abi
         )
-        self.deadline = config["deadline"]
+        self.kiln_address = config["kiln_address"]
+        self.kiln_contract = self.w3.eth.contract(
+            address=self.kiln_address, abi=open_json("Kiln.json")["abi"]
+        )
+        # get lotteryEnd public value from contract
+        self.kiln_deadline = self.kiln_contract.functions.lotteryEnd().call()
+        print(f"Kiln address is {self.kiln_address}")
         print(f"Initialising keeper on {config['chain_name']}")
 
-        print(f"Deadline is {datetime.datetime.fromtimestamp(self.deadline)}")
+        print(f"Deadline is {datetime.datetime.fromtimestamp(self.kiln_deadline)}")
         print(f"Time now is {datetime.datetime.now()}")
 
-        self.w3 = Web3(Web3.HTTPProvider(config["rpc_url"]))
         self.w3.middleware_onion.add(
             construct_sign_and_send_raw_middleware(self.account)
         )
@@ -50,8 +56,7 @@ class Keeper:
         print(
             f"Your hot wallet balance is {self.w3.from_wei(self.balance, 'ether')} {self.currency}"
         )
-        self.kiln_address = config["kiln_address"]
-        print(f"Kiln address is {self.kiln_address}")
+
 
     def spin(self):
         while True:
@@ -60,7 +65,7 @@ class Keeper:
 
     def check(self):
         # check if timestamp is after the deadline
-        if time.time() > self.deadline:
+        if time.time() > self.kiln_deadline:
             print("=" * 50)
             print(f"[{datetime.datetime.now()}] Deadline reached, executing...")
             self.execute()
@@ -78,7 +83,6 @@ class Keeper:
     def _execute_vrf(self):
         # get address type to send to contract from string address
         address = self.w3.to_checksum_address(self.kiln_address)
-        
         #self.contract.functions.upKeep(address).transact({"from": self.account.address}) 
         tx = self.contract.functions.upKeep(address).build_transaction(
             {
@@ -95,6 +99,8 @@ class Keeper:
         # get tx receipt
         tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
         print(f"Transaction succeeded, block number: {tx_receipt['blockNumber']}")
+
+
 
     def _execute_blockhash_random(self):
         address = self.w3.to_checksum_address(self.kiln_address)

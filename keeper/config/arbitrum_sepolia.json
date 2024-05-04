@@ -8,5 +8,7 @@
     "deadline": 1714824061,
     "delay": 60,
     "currency": "ETH",
-    "kiln_address": "0x7c0AFC3Fd073d492215dC2D32A1A9538Ee766134"
+    "kiln_address": "0x7c0AFC3Fd073d492215dC2D32A1A9538Ee766134",
+    "gas_price": 5,
+    "gas_limit": 10000000
 }
