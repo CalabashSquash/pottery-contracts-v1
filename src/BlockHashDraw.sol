@@ -24,6 +24,13 @@ contract BlockHashDraw {
 
     function upKeep(address kiln) external onlyKeeper {
         // do nothing
+        bytes32 blockHash = blockhash(block.number - 1); // get the previous block hash use as random ID
+        uint256 blockNumber = block.number;
+
+        kilns[blockHash] = kiln;
+        manyBlockDrawn[blockHash] = false;
+        blockNumbers[blockHash] = blockNumber;
+
     }
 
     function upKeepMany(address kiln) external onlyKeeper {

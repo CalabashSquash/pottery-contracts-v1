@@ -77,7 +77,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
                 requestConfirmations: s_requestConfirmations,
                 callbackGasLimit: s_callbackGasLimit,
                 numWords: s_numWords,
-                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
+                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})) // new parameter
             })
         );
 

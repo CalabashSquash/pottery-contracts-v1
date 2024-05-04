@@ -4,9 +4,9 @@
     "explorer_url": "https://sepolia.arbiscan.io",
     "network_id": 421614,
     "vrf": true,
-    "contract_address": "0x89426168c6F56ebaE35653838A1bE98C931bA664",
-    "deadline": 1714806061,
+    "contract_address": "0x814c80A83724988725AE96941D7Ad9fB7C69b44e",
+    "deadline": 1714824061,
     "delay": 60,
     "currency": "ETH",
-    "kiln_address": "0x89426168c6F56ebaE35653838A1bE98C931bA664"
+    "kiln_address": "0x7c0AFC3Fd073d492215dC2D32A1A9538Ee766134"
 }
