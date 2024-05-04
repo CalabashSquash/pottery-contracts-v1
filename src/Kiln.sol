@@ -25,11 +25,13 @@ contract Kiln is ERC721 {
     uint256 public mintWindowEnd;
     uint256 public treasuryDivisor;
     address public treasury;
+    uint256 public ID;
 
     error NotVRF(address caller);
     error WinningNumberNotSet();
     error LotteryNotOver();
     error LotteryEndsAfterYtExpiration();
+    error MintWindowEndsAfterYtExpiration();
     error DepositAfterMintWindow();
 
     /**
@@ -57,13 +59,14 @@ contract Kiln is ERC721 {
         lotteryEnd = _lotteryEnd;
 
         if (mintWindowEnd > lotteryEnd) {
-            revert LotteryEndsAfterYtExpiration();
+            revert MintWindowEndsAfterYtExpiration();
         }
         mintWindowEnd = _mintWindowEnd;
 
         treasuryDivisor = _treasuryDivisor;
         treasury = _treasury;
         ticketCost = _ticketCost;
+        ID = _roundId;
 
         // expiry timing logic
         // DRand, ranDAO
@@ -126,6 +129,10 @@ contract Kiln is ERC721 {
         }
         uint256 winningTicket = uint256(winningNumber) % ticketIdCounter;
         return ownerOf(winningTicket);
+    }
+
+    function getRewardTokens() public view returns (address[] memory) {
+        return yt.getRewardTokens();
     }
 
     modifier onlyVrf() {
