@@ -32,11 +32,12 @@ class Keeper:
             address=config["contract_address"], abi=abi
         )
         self.deadline = config["deadline"]
+        print(f"Initialising keeper on {config['chain_name']}")
 
         print(f"Deadline is {datetime.datetime.fromtimestamp(self.deadline)}")
         print(f"Time now is {datetime.datetime.now()}")
 
-        self.w3 = None
+        self.w3 = Web3(Web3.HTTPProvider(config["rpc_url"])
         self.w3.middleware_onion.add(
             construct_sign_and_send_raw_middleware(self.account)
         )
