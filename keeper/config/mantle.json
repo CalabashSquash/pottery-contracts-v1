@@ -1,0 +1,14 @@
+{
+    "chain_name": "Mantle",
+    "rpc_url": "https://rpc.mantle.xyz",
+    "explorer_url": "https://sepolia.arbiscan.io",
+    "network_id": 421614,
+    "vrf": true,
+    "contract_address": "0x9Ef2439d28D2D2bde227A22471CD02ce5138B034",
+    "deadline": 1714824061,
+    "delay": 5,
+    "currency": "ETH",
+    "kiln_address": "0x6C7585eFe8ECE82548fe2BAC8bEcD98Ef26DFcb1",
+    "gas_price": 5,
+    "gas_limit": 10000000
+}

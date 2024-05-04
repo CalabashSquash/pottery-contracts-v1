@@ -1,0 +1,14 @@
+{
+    "chain_name": "localhost",
+    "rpc_url": "http://127.0.0.1:8545",
+    "explorer_url": "https://sepolia.arbiscan.io",
+    "network_id": 31337,
+    "vrf": false,
+    "contract_address": "0xaca81583840B1bf2dDF6CDe824ada250C1936B4D",
+    "deadline": 1714824061,
+    "delay": 2,
+    "currency": "ETH",
+    "kiln_address": "0x821f3361D454cc98b7555221A06Be563a7E2E0A6",
+    "gas_price": 5,
+    "gas_limit": 10000000
+}

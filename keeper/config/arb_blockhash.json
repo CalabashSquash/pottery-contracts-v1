@@ -4,11 +4,11 @@
     "explorer_url": "https://sepolia.arbiscan.io",
     "network_id": 421614,
     "vrf": false,
-    "contract_address": "0xAD11fa4db9A36AD458e05F71056ee6279D56FdB4",
+    "contract_address": "0xb3DfDb98e4a137bd7C3E01706282c59D87c8c361",
     "deadline": 1714824061,
     "delay": 5,
     "currency": "ETH",
-    "kiln_address": "0x7c0AFC3Fd073d492215dC2D32A1A9538Ee766134",
+    "kiln_address": "0xE83A6b768ae014CB0dC9976648dA6C0a4B7595A6",
     "gas_price": 5,
     "gas_limit": 10000000
 }

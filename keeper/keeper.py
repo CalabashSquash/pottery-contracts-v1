@@ -40,6 +40,10 @@ class Keeper:
             address=self.kiln_address, abi=open_json("Kiln.json")["abi"]
         )
         # get lotteryEnd public value from contract
+        print("=+++++")
+        print(config["kiln_address"])
+        print(self.kiln_contract)
+        print("=+++++")
         self.kiln_deadline = self.kiln_contract.functions.lotteryEnd().call()
         print(f"Kiln address is {self.kiln_address}")
         print(f"Initialising keeper on {config['chain_name']}")
@@ -119,12 +123,11 @@ class Keeper:
         print(f"Transaction succeeded, block number: {block_number}, block hash: {block_hash}")
         print(f"waiting for {self.config['delay']} seconds")
         time.sleep(self.config["delay"])
-        tx = self.contract.functions.draw(block_hash).build_transaction(
+        tx = self.contract.functions.draw(address).build_transaction(
             {
-                "from": self.account.address,
                 "nonce": self.w3.eth.get_transaction_count(self.account.address),
                 "gas": 1000000,
-                "gasPrice": self.w3.to_wei("5", "gwei"),
+                #"gasPrice": self.w3.to_wei("5", "gwei"),
             }
         )
         signed_tx = self.account.sign_transaction(tx)
@@ -149,6 +152,8 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("Failed to load config file")
     keystore_file = args.keystore
+
+    print(config)
 
     if os.path.isfile(keystore_file) or True:
         import os
