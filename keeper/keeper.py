@@ -3,6 +3,8 @@ from eth_account.signers.local import LocalAccount
 from web3 import Web3, EthereumTesterProvider
 import web3
 from web3.middleware import construct_sign_and_send_raw_middleware
+from typing import Dict
+import getpass
 
 import os
 import json
@@ -71,9 +73,9 @@ class Keeper:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, help='Path to config file')
-    parser.add_argument('--keystore', type=str, help='Path to keystore file)
+    parser.add_argument('--keystore', type=str, help='Path to keystore file')
     args = parser.parse_args()
-
+    print(args.config)
     try:
         with open(args.config, 'r') as f:
             config = json.load(f)
@@ -93,8 +95,7 @@ if __name__ == '__main__':
         try:
             self.account = Account.from_key(private_key)
         except:
-            print("invalid private key, continuing without...")
-            return
+            raise Exception("invalid private key...")
         print(f"private key valid, account: {self.explorer_url}address/{self.account.address}\ncreating keystore file")
         for i in range(3):
             password = getpass.getpass("Enter a password for the keystore file: ")
@@ -107,21 +108,13 @@ if __name__ == '__main__':
             else:
                 break
         if password != password2:
-            print("Passwords do not match, continueing without...")
-            return
+            raise Exception("Passwords do not match...")
         keystore = Account.encrypt(private_key, password=password)
         with open(keystore_file, 'w') as f:
             f.write(json.dumps(keystore))
         self.has_wallet = True
 
-        self.w3.middleware_onion.add(construct_sign_and_send_raw_middleware(self.account))
-
-        print(f"Your hot wallet address is {self.account.address}")
-        self.balance = self.w3.eth.get_balance(self.account.address)
-        print(
-            f"Your hot wallet balance is {OneInch.parse_float(self.w3.from_wei(self.balance, 'ether'))} {self.currency}")
- 
 
 
-    keeper = Keeper(config)
-    print(keeper.get_balance())
+    #keeper = Keeper(config)
+    #print(keeper.get_balance())
