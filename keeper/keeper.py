@@ -150,11 +150,13 @@ if __name__ == "__main__":
         raise Exception("Failed to load config file")
     keystore_file = args.keystore
 
-    if os.path.isfile(keystore_file):
-        priv_key = Account.decrypt(
-            open_json(keystore_file),
-            getpass.getpass(prompt="Input keystore password: "),
-        )
+    if os.path.isfile(keystore_file) or True:
+        import os
+        priv_key = os.environ['PRIVATE_KEY']
+        # priv_key = Account.decrypt(
+        #     open_json(keystore_file),
+        #     getpass.getpass(prompt="Input keystore password: "),
+        # )
         account = Account.from_key(priv_key)
     else:
         print("keystore file not found, creating one")
