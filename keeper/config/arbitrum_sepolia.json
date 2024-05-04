@@ -1,0 +1,10 @@
+{
+    "chain_name": "arbitrum sepolia",
+    "rpc": "http://localhost:8545",
+    "network_id": 1,
+    "vrf": "true",
+    "random_address": "0x3d2341ADb2D31f1c93C4b0a6cf5bE5f7b8f0b7C1",
+    "deadline_timestamp": 1630000000,
+    "delay": 60,
+    
+}
