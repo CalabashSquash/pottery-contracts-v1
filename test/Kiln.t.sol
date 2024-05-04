@@ -81,7 +81,6 @@ contract CounterTest is Test {
             // hashes to 2 modulo total supply (secondPlayer owns tokenId 2)
             uint256 number = 126;
             bytes32 winningHash = keccak256(abi.encodePacked(number));
-            uint256 winningId = uint256(winningHash) % 5;
             kiln.vrfCallback(winningHash);
             uint256 preBal1 = IERC20(mockRewardTokens[0]).balanceOf(secondPlayer);
             uint256 preBal2 = IERC20(mockRewardTokens[1]).balanceOf(secondPlayer);
@@ -98,13 +97,13 @@ contract CounterTest is Test {
             assertEq(preBal3 + rewardAmount - treasuryReward, postBal3, "3");
         }
 
-        uint256 postBal1 = IERC20(mockRewardTokens[0]).balanceOf(treasury);
-        uint256 postBal2 = IERC20(mockRewardTokens[1]).balanceOf(treasury);
-        uint256 postBal3 = IERC20(mockRewardTokens[2]).balanceOf(treasury);
+        uint256 postBal1T = IERC20(mockRewardTokens[0]).balanceOf(treasury);
+        uint256 postBal2T = IERC20(mockRewardTokens[1]).balanceOf(treasury);
+        uint256 postBal3T = IERC20(mockRewardTokens[2]).balanceOf(treasury);
 
-        assertEq(treasuryReward, postBal1);
-        assertEq(treasuryReward, postBal2);
-        assertEq(treasuryReward, postBal3);
+        assertEq(treasuryReward, postBal1T);
+        assertEq(treasuryReward, postBal2T);
+        assertEq(treasuryReward, postBal3T);
     }
 }
 

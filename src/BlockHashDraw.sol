@@ -7,28 +7,22 @@ contract BlockHashDraw {
     address public s_keeper;
     address public s_owner;
 
-
     uint256 public s_lastBlockNumber;
-
 
     uint16 immutable s_blockOffset = 10;
     uint16 immutable s_manyBlockInterval = 9;
 
-    mapping(uint256 => uint256[]) public randomNumbers;
+    mapping(bytes32 => uint256[]) public randomNumbers;
 
     mapping(bytes32 => address) public kilns;
     mapping(bytes32 => bool) manyBlockDrawn;
     mapping(bytes32 => uint256) public blockNumbers;
 
-
-
     constructor() {
         s_owner = msg.sender;
     }
-    
-    
+
     function upKeep(address kiln) external onlyKeeper {
-        
         // do nothing
     }
 
@@ -37,20 +31,17 @@ contract BlockHashDraw {
         // get block hash
         bytes32 blockHash = blockhash(block.number - 1); // get the previous block hash use as random ID
         uint256 blockNumber = block.number;
-        
+
         kilns[blockHash] = kiln;
         manyBlockDrawn[blockHash] = true;
         blockNumbers[blockHash] = blockNumber;
-
     }
 
-    function draw(bytes32 blockHash) external onlyKeeper{
-        
+    function draw(bytes32 blockHash) external onlyKeeper {
         uint256 startBlock = blockNumbers[blockHash] + s_manyBlockInterval + s_blockOffset;
-        
+
         // ensure current blocknumber is at least blockNumbers[blockHash] + s_manyBlockInterval
         require(block.number > startBlock, "BlockHashDraw: min block number not reached");
-        
 
         IKiln kiln = IKiln(kilns[blockHash]);
         if (manyBlockDrawn[blockHash]) {
@@ -58,13 +49,11 @@ contract BlockHashDraw {
                 uint256 currentBlock = blockNumbers[blockHash] - i;
                 randomNumbers[blockHash].push(uint256(blockhash(block.number - i - 1)));
             }
-            
         } else {
-            bytes32 randomHash = blockhash(startBlock); 
+            bytes32 randomHash = blockhash(startBlock);
             kiln.vrfCallback(blockHash);
         }
         kiln.vrfCallback(blockHash);
-
     }
 
     function setKeeper(address _keeper) external onlyOwner {

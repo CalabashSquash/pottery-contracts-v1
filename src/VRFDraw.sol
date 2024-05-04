@@ -17,7 +17,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
     LinkTokenInterface immutable LINKTOKEN;
 
     // Your subscription ID.
-    uint64 immutable s_subscriptionId;
+    uint256 immutable s_subscriptionId;
 
     // The gas lane to use, which specifies the maximum gas price to bump to.
     // For a list of available gas lanes on each network,
@@ -58,7 +58,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
      * @param vrfCoordinator - coordinator, check https://docs.chain.link/docs/vrf-contracts/#configurations
      * @param keyHash - the gas lane to use, which specifies the maximum gas price to bump to
      */
-    constructor(uint64 subscriptionId, address vrfCoordinator, address link, bytes32 keyHash, uint32 callbackGasLimit)
+    constructor(uint256 subscriptionId, address vrfCoordinator, address link, bytes32 keyHash, uint32 callbackGasLimit)
         VRFConsumerBaseV2Plus(vrfCoordinator)
     {
         COORDINATOR = IVRFCoordinatorV2Plus(vrfCoordinator);
@@ -75,7 +75,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
                 requestConfirmations: s_requestConfirmations,
-                s_callbackGasLimit: s_callbackGasLimit,
+                callbackGasLimit: s_callbackGasLimit,
                 numWords: s_numWords,
                 extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
             })
@@ -103,7 +103,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
             revert("not implemented");
             //kiln.receiveRandomWordsMany(randomWords);
         } else {
-            kiln.vrfCallback(randomWords[0]);
+            kiln.vrfCallback(bytes32(randomWords[0]));
         }
     }
 
@@ -138,13 +138,13 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         s_requestIdToIsMany[requestId] = true;
     }
 
-    function _requestRandomWords() internal returns(uint256) {
+    function _requestRandomWords() internal returns (uint256) {
         uint256 requestId = COORDINATOR.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
                 requestConfirmations: s_requestConfirmations,
-                s_callbackGasLimit: s_callbackGasLimit,
+                callbackGasLimit: s_callbackGasLimit,
                 numWords: s_numWords,
                 extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
             })
@@ -157,27 +157,26 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         return requestId;
     }
 
-
     function setCallbackGasLimit(uint32 _callbackGasLimit) external onlyOwner {
         s_callbackGasLimit = _callbackGasLimit;
     }
 
-    function setSubscriptionId(uint64 _subscriptionId) external onlyOwner {
-        s_subscriptionId = _subscriptionId;
-    }
+    // function setSubscriptionId(uint64 _subscriptionId) external onlyOwner {
+    //     s_subscriptionId = _subscriptionId;
+    // }
 
-    function setKeyHash(bytes32 _keyHash) external onlyOwner {
-        s_keyHash = _keyHash;
-    }
+    // function setKeyHash(bytes32 _keyHash) external onlyOwner {
+    //     s_keyHash = _keyHash;
+    // }
 
     function setNumWords(uint32 _numWords) external onlyOwner {
         s_numWords = _numWords;
     }
 
-    modifier onlyOwner() override {
-        require(msg.sender == s_owner);
-        _;
-    }
+    // modifier onlyOwner() override {
+    //     require(msg.sender == s_owner);
+    //     _;
+    // }
 
     modifier onlyKeeper() {
         require(msg.sender == s_keeper);
