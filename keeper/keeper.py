@@ -92,6 +92,9 @@ class Keeper:
         # Send the signed transaction
         tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
         print(f"Transaction sent, tx hash: {tx_hash.hex()}")
+        # get tx receipt
+        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"Transaction succeeded, block number: {tx_receipt['blockNumber']}")
 
     def _execute_blockhash_random(self):
         address = self.w3.to_checksum_address(self.kiln_address)
@@ -104,6 +107,27 @@ class Keeper:
             }
         )
         signed_tx = self.account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        print(f"Transaction sent, tx hash: {tx_hash.hex()}")
+        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        block_number = tx_receipt["blockNumber"]
+        block_hash = self.w3.eth.get_block(block_number)["hash"]
+        print(f"Transaction succeeded, block number: {block_number}, block hash: {block_hash}")
+        print(f"waiting for {self.config['delay']} seconds")
+        time.sleep(self.config["delay"])
+        tx = self.contract.functions.draw(block_hash).build_transaction(
+            {
+                "from": self.account.address,
+                "nonce": self.w3.eth.get_transaction_count(self.account.address),
+                "gas": 1000000,
+                "gasPrice": self.w3.to_wei("5", "gwei"),
+            }
+        )
+        signed_tx = self.account.sign_transaction(tx)
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        print(f"Transaction sent, tx hash: {tx_hash.hex()}")
+        tx_receipt = self.w3.eth.wait_for_transaction_receipt(tx_hash)
+        print(f"Transaction succeeded, block number: {tx_receipt['blockNumber']}")
 
     def get_balance(self):
         return self.web3.eth.getBalance(self.account.address)
