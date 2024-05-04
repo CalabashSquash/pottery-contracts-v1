@@ -21,6 +21,7 @@ class Keeper:
     def __init__(self, config: Dict, account: LocalAccount):
         self.web3 = Web3(Web3.HTTPProvider(config["rpc_url"]))
         # get enviorment variable PRIVATE_KEY
+        self.config = config
         self.account = account
         self.currency = config["currency"]
         if config["vrf"]:
@@ -49,6 +50,9 @@ class Keeper:
         print(
             f"Your hot wallet balance is {self.w3.from_wei(self.balance, 'ether')} {self.currency}"
         )
+        self.kiln_address = config["kiln_address"]
+        print(f"Kiln address is {self.kiln_address}")
+
     def spin(self):
         while True:
             self.check()
@@ -57,7 +61,11 @@ class Keeper:
     def check(self):
         # check if timestamp is after the deadline
         if time.time() > self.deadline:
+            print("=" * 50)
+            print(f"[{datetime.datetime.now()}] Deadline reached, executing...")
             self.execute()
+        else:
+            print(f"[{datetime.datetime.now()}] Deadline not reached yet, waiting...")
 
     def execute(self):
         if self.config["vrf"]:
@@ -68,11 +76,34 @@ class Keeper:
             self._execute()
 
     def _execute_vrf(self):
-         
-        pass
+        # get address type to send to contract from string address
+        address = self.w3.to_checksum_address(self.kiln_address)
+        
+        #self.contract.functions.upKeep(address).transact({"from": self.account.address}) 
+        tx = self.contract.functions.upKeep(address).build_transaction(
+            {
+                "from": self.account.address,
+                "nonce": self.w3.eth.get_transaction_count(self.account.address),
+                "gas": 1000000,
+                "gasPrice": self.w3.to_wei("5", "gwei"),
+            }
+        )
+        signed_tx = self.account.sign_transaction(tx)
+        # Send the signed transaction
+        tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        print(f"Transaction sent, tx hash: {tx_hash.hex()}")
 
     def _execute_blockhash_random(self):
-        pass
+        address = self.w3.to_checksum_address(self.kiln_address)
+        tx = self.contract.functions.upKeep(address).build_transaction(
+            {
+                "from": self.account.address,
+                "nonce": self.w3.eth.get_transaction_count(self.account.address),
+                "gas": 1000000,
+                "gasPrice": self.w3.to_wei("5", "gwei"),
+            }
+        )
+        signed_tx = self.account.sign_transaction(tx)
 
     def get_balance(self):
         return self.web3.eth.getBalance(self.account.address)
@@ -124,4 +155,5 @@ if __name__ == "__main__":
             f.write(json.dumps(keystore))
 
     keeper = Keeper(config, account)
+    keeper.spin()
     # print(keeper.get_balance())
