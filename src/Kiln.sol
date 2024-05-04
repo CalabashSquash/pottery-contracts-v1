@@ -32,16 +32,6 @@ contract Kiln is ERC721 {
     error LotteryEndsAfterYtExpiration();
     error DepositAfterMintWindow();
 
-    function genName(uint256 _roundId) internal pure returns (string memory) {
-        string memory roundId = Strings.toString(_roundId);
-        return string.concat("Pottery Round ", roundId);
-    }
-
-    function genSymbol(uint256 _roundId) internal pure returns (string memory) {
-        string memory roundId = Strings.toString(_roundId);
-        return string.concat("PR", roundId);
-    }
-
     /**
      * @dev Because we mint one NFT per ticket, we can configure the ticket cost based off both the gas price of the
      *      network, and the approximate value of the YT token.
@@ -78,6 +68,16 @@ contract Kiln is ERC721 {
         // expiry timing logic
         // DRand, ranDAO
         // NTH: tiers
+    }
+
+    function genName(uint256 _roundId) internal pure returns (string memory) {
+        string memory roundId = Strings.toString(_roundId);
+        return string.concat("Pottery Round ", roundId);
+    }
+
+    function genSymbol(uint256 _roundId) internal pure returns (string memory) {
+        string memory roundId = Strings.toString(_roundId);
+        return string.concat("PR", roundId);
     }
 
     function depositYT(uint256 buyAmount) external {
