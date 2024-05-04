@@ -76,6 +76,7 @@ contract CounterTest is Test {
         kiln.transferFrom(degen, secondPlayer, 2);
 
         vm.stopPrank();
+        vm.warp(lottoEnd + 1);
 
         {
             // hashes to 2 modulo total supply (secondPlayer owns tokenId 2)
