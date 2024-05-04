@@ -46,14 +46,14 @@ contract BlockHashDraw {
         IKiln kiln = IKiln(kilns[blockHash]);
         if (manyBlockDrawn[blockHash]) {
             for (uint256 i = 0; i < s_manyBlockInterval; i++) {
-                uint256 currentBlock = blockNumbers[blockHash] - i;
-                randomNumbers[blockHash].push(uint256(blockhash(block.number - i - 1)));
+                uint256 currentBlock = startBlock - i;
+                randomNumbers[blockHash].push(uint256(blockhash(currentBlock)));
             }
+            // kiln.vrfCallbackMulti(randomNumbers[blockHash]);
         } else {
             bytes32 randomHash = blockhash(startBlock);
-            kiln.vrfCallback(blockHash);
+            kiln.vrfCallback(randomHash);
         }
-        kiln.vrfCallback(blockHash);
     }
 
     function setKeeper(address _keeper) external onlyOwner {
