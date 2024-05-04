@@ -23,9 +23,9 @@ contract KilnScript is Script {
             new MockYT(block.timestamp + (10 * 60), rewardTokens, address(123), 1000 ether, "YIELD TOKEN", "YT");
         mockYT.setRewards(rewardAmounts);
 
-        uint256 lotteryEnd = block.timestamp + (8 * (60 * 60));
-        uint256 mintWindowEnd = block.timestamp + (7 * (60 * 60));
-        uint256 roundId = 8;
+        uint256 lotteryEnd = block.timestamp + (2 * (60));
+        uint256 mintWindowEnd = block.timestamp + (3 * (60));
+        uint256 roundId = 9;
         uint256 treasuryDivisor = 10;
         uint256 ticketCost = 0.5 ether;
         address vrf = 0xAD11fa4db9A36AD458e05F71056ee6279D56FdB4;

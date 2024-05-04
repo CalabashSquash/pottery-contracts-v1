@@ -39,6 +39,8 @@ contract Kiln is ERC721 {
     error BalanceTooLow();
     error WinnerAlreadyPaid();
 
+    event CallbackSent(bytes32 randomNumber);
+
     /**
      * @dev Because we mint one NFT per ticket, we can configure the ticket cost based off both the gas price of the
      *      network, and the approximate value of the YT token.
@@ -118,12 +120,13 @@ contract Kiln is ERC721 {
     }
 
     function vrfCallback(bytes32 randomNumber) public onlyVrf {
-        if (!MiniHelpers.isCurrentlyExpired(lotteryEnd)) {
-            revert LotteryNotOver();
-        }
+        emit CallbackSent(randomNumber);
+        // if (!MiniHelpers.isCurrentlyExpired(lotteryEnd)) {
+        //     revert LotteryNotOver();
+        // }
 
-        winningNumber = randomNumber;
-        payOutWinner();
+        // winningNumber = randomNumber;
+        // payOutWinner();
     }
 
     function payOutWinner() public {
