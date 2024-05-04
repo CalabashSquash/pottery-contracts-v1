@@ -98,11 +98,12 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         // You can return the value to the requester,
         // but this example simply stores it.
         s_requestIdToRandomWords[requestId] = randomWords;
-        kiln = IKiln(s_requestIdToKiln[requestId]);
+        IKiln kiln = IKiln(s_requestIdToKiln[requestId]);
         if (s_requestIdToIsMany[requestId]) {
-            kiln.receiveRandomWordsMany(randomWords);
+            revert("not implemented");
+            //kiln.receiveRandomWordsMany(randomWords);
         } else {
-            kiln.receiveRandomWords(randomWords[0]);
+            kiln.vrfCallback(randomWords[0]);
         }
     }
 
@@ -113,7 +114,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
     /**
      * @notice upKeep function to send VRF number to a kiln, only one number
      *
-     * @param address kiln - the kiln to send the number to
+     * @param kiln - the kiln to send the number to
      */
     function upKeep(address kiln) external onlyKeeper {
         // TODO: check market is type of kiln
@@ -126,7 +127,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
     /**
      * @notice upKeep function to send VRF number to a kiln, multiple numbers
      *
-     * @param address kiln - the kiln to send the numbers to
+     * @param kiln - the kiln to send the numbers to
      */
     function upKeepMany(address kiln) external onlyKeeper {
         // TODO: check market is type of kiln
@@ -137,7 +138,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         s_requestIdToIsMany[requestId] = true;
     }
 
-    function _requestRandomWords() internal {
+    function _requestRandomWords() internal returns(uint256) {
         uint256 requestId = COORDINATOR.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
@@ -156,9 +157,6 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         return requestId;
     }
 
-    function setCoordinator(address _coordinator) external onlyOwner {
-        COORDINATOR = IVRFCoordinatorV2Plus(_coordinator);
-    }
 
     function setCallbackGasLimit(uint32 _callbackGasLimit) external onlyOwner {
         s_callbackGasLimit = _callbackGasLimit;
@@ -176,7 +174,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         s_numWords = _numWords;
     }
 
-    modifier onlyOwner() {
+    modifier onlyOwner() override {
         require(msg.sender == s_owner);
         _;
     }
