@@ -6,6 +6,8 @@ import {IVRFCoordinatorV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/inter
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
+import {IKiln} from "./IKiln.sol";
+
 /**
  * @title The VRFConsumerV2 contract
  * @notice A contract that gets random values from Chainlink VRF V2
@@ -35,13 +37,14 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
 
     // For this example, retrieve 2 random values in one request.
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
-    uint32 public immutable s_numWords = 9;
+    uint32 public s_numWords = 9;
 
     uint256[] public s_randomWords;
     address s_owner;
 
     mapping(uint256 => uint256[]) public s_requestIdToRandomWords;
     mapping(uint256 => address) public s_requestIdToKiln;
+    mapping(uint256 => bool) public s_requestIdToIsMany;
     uint256 public s_requestId;
 
     address public s_keeper;
@@ -95,8 +98,12 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         // You can return the value to the requester,
         // but this example simply stores it.
         s_requestIdToRandomWords[requestId] = randomWords;
-        kiln = s_requestIdToKiln[requestId];
-         
+        kiln = IKiln(s_requestIdToKiln[requestId]);
+        if (s_requestIdToIsMany[requestId]) {
+            kiln.receiveRandomWordsMany(randomWords);
+        } else {
+            kiln.receiveRandomWords(randomWords[0]);
+        }
     }
 
     function setKeeper(address _keeper) external onlyOwner {
@@ -113,6 +120,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         uint256 requestId = _requestRandomWords();
 
         s_requestIdToKiln[requestId] = kiln;
+        s_requestIdToIsMany[requestId] = false;
     }
 
     /**
@@ -126,10 +134,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         uint256 requestId = _requestRandomWords();
 
         s_requestIdToKiln[requestId] = kiln;
-
-
-
-
+        s_requestIdToIsMany[requestId] = true;
     }
 
     function _requestRandomWords() internal {
@@ -149,6 +154,26 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
 
         // Return the requestId to the requester.
         return requestId;
+    }
+
+    function setCoordinator(address _coordinator) external onlyOwner {
+        COORDINATOR = IVRFCoordinatorV2Plus(_coordinator);
+    }
+
+    function setCallbackGasLimit(uint32 _callbackGasLimit) external onlyOwner {
+        s_callbackGasLimit = _callbackGasLimit;
+    }
+
+    function setSubscriptionId(uint64 _subscriptionId) external onlyOwner {
+        s_subscriptionId = _subscriptionId;
+    }
+
+    function setKeyHash(bytes32 _keyHash) external onlyOwner {
+        s_keyHash = _keyHash;
+    }
+
+    function setNumWords(uint32 _numWords) external onlyOwner {
+        s_numWords = _numWords;
     }
 
     modifier onlyOwner() {
