@@ -95,7 +95,7 @@ contract Kiln is ERC721 {
         }
 
         ticketIdCounter = _ticketIdCounter;
-        yt.transferFrom(msg.sender, address(this), buyAmount * ticketCost / 10e18);
+        yt.transferFrom(msg.sender, address(this), buyAmount * ticketCost);
     }
 
     function vrfCallback(bytes32 randomNumber) public onlyVrf {
