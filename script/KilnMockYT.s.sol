@@ -30,7 +30,7 @@ contract KilnScript is Script {
         uint256 mintWindowEnd = block.timestamp + (10);
         uint256 treasuryDivisor = 10;
         uint256 ticketCost = 1 ether;
-        address vrf = 0x814c80A83724988725AE96941D7Ad9fB7C69b44e;
+        address vrf = 0x6379c0B3eE6BdC336f674e7fa111503180c4Fc01;
         address treasury = vrf;
 
         Kiln kiln =

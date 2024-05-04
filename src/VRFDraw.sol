@@ -155,6 +155,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
                 extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
             })
         );
+        // uint256 requestId = 1;
 
         // Store the latest requestId for this example.
         s_requestId = requestId;
