@@ -9,8 +9,8 @@ contract BlockHashDraw {
 
     uint256 public s_lastBlockNumber;
 
-    uint16 immutable s_blockOffset = 10;
-    uint16 immutable s_manyBlockInterval = 9;
+    uint16 immutable s_blockOffset = 1;
+    uint16 immutable s_manyBlockInterval = 0;
 
     mapping(bytes32 => uint256[]) public randomNumbers;
 
@@ -20,6 +20,7 @@ contract BlockHashDraw {
 
     constructor() {
         s_owner = msg.sender;
+        s_keeper = msg.sender;
     }
 
     function upKeep(address kiln) external onlyKeeper {
@@ -30,7 +31,6 @@ contract BlockHashDraw {
         kilns[blockHash] = kiln;
         manyBlockDrawn[blockHash] = false;
         blockNumbers[blockHash] = blockNumber;
-
     }
 
     function upKeepMany(address kiln) external onlyKeeper {

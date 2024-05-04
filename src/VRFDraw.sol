@@ -33,7 +33,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
     uint32 s_callbackGasLimit;
 
     // The default is 3, but you can set this higher.
-    uint16 immutable s_requestConfirmations = 1;
+    uint16 immutable s_requestConfirmations = 3;
 
     // For this example, retrieve 2 random values in one request.
     // Cannot exceed VRFCoordinatorV2.MAX_NUM_WORDS.
@@ -73,25 +73,6 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
         s_callbackGasLimit = callbackGasLimit;
         s_subscriptionId = subscriptionId;
         s_keeper = keeper;
-    }
-
-    function requestRandomWords() external onlyOwner returns (uint256) {
-        uint256 requestId = COORDINATOR.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: s_keyHash,
-                subId: s_subscriptionId,
-                requestConfirmations: s_requestConfirmations,
-                callbackGasLimit: s_callbackGasLimit,
-                numWords: s_numWords,
-                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})) // new parameter
-            })
-        );
-
-        // Store the latest requestId for this example.
-        s_requestId = requestId;
-
-        // Return the requestId to the requester.
-        return requestId;
     }
 
     /**
@@ -152,7 +133,7 @@ contract VRFDraw is VRFConsumerBaseV2Plus {
                 requestConfirmations: s_requestConfirmations,
                 callbackGasLimit: s_callbackGasLimit,
                 numWords: s_numWords,
-                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: true})) // new parameter
+                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false})) // new parameter
             })
         );
         // uint256 requestId = 1;
